@@ -1,262 +1,426 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>AI Chat</title>
-<style>
-    body {
-        margin: 0;
-        font-family: Arial;
-        background: #0a0f24;
-        color: white;
-        overflow: hidden;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SmartHub AI — Text + Photo (send together)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --accent:#7a5bff; --accent2:#00a6ff; --bg:#070014; --panel: rgba(255,255,255,0.03); --text:#eaf6ff;
     }
-
-    /* ------------ ЧАТ ------------ */
-    #chat {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 60px;
-        right: 0;
-        padding: 20px;
-        overflow-y: auto;
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(135deg,#070014,#001233);font-family:"Orbitron",Arial,Helvetica,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+    .app{width:94%;max-width:1200px;margin:24px auto;height:88vh;position:relative;display:flex;gap:20px}
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px;padding:16px;border:1px solid rgba(122,91,255,0.08);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.55); height:100%; display:flex; flex-direction:column; backdrop-filter: blur(8px);
     }
-
-    .msg {
-        max-width: 60%;
-        padding: 12px 16px;
-        margin: 10px 0;
-        border-radius: 14px;
-        opacity: 0;
-        animation: fadeSlide .35s forwards;
+    #chat{flex:1; overflow:auto; padding-right:8px; display:flex; flex-direction:column; gap:8px;}
+    .msg{display:flex; margin:6px 8px; max-width:78%;}
+    .msg.user{justify-content:flex-end; align-self:flex-end;}
+    .msg.ai{justify-content:flex-start; align-self:flex-start;}
+    .bubble{
+      padding:12px 14px;border-radius:12px; box-shadow: 0 8px 20px rgba(0,0,0,0.45); word-wrap:break-word; white-space:pre-wrap;
+      animation-duration:.32s; animation-fill-mode:both;
     }
+    .bubble.user{ background: linear-gradient(135deg,var(--accent),var(--accent2)); color:#021; animation-name: slideInRight; }
+    .bubble.ai{ background: rgba(255,255,255,0.02); color:var(--text); animation-name: slideInLeft; }
+    @keyframes slideInRight { from{transform:translateX(30px);opacity:0} to{transform:translateX(0);opacity:1}}
+    @keyframes slideInLeft  { from{transform:translateX(-30px);opacity:0} to{transform:translateX(0);opacity:1}}
 
-    .me {
-        background: #3c59ff;
-        margin-left: auto;
-        animation-name: slideRight;
-    }
+    .input-row{display:flex; gap:10px; align-items:center; margin-top:12px}
+    .input-row input[type="text"]{flex:1;padding:12px 14px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:var(--text);outline:none}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#001}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+    .btn.clear{background:rgba(255,255,255,0.04);color:var(--text)}
+    .controls-row{display:flex;gap:8px;align-items:center;margin-top:10px}
 
-    .ai {
-        background: #1e243a;
-        margin-right: auto;
-        animation-name: slideLeft;
-    }
+    .neon-bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .neon{position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(80px);mix-blend-mode:screen}
+    .n1{left:-140px;top:-120px;background:radial-gradient(circle,#7a5bff,transparent 40%)}
+    .n2{right:-120px;bottom:-60px;background:radial-gradient(circle,#00a6ff,transparent 40%)}
+    .n3{left:30%;top:62%;background:radial-gradient(circle,#b0ff7a,transparent 35%)}
 
-    @keyframes slideRight {
-        from { transform: translateX(40px); opacity: 0; }
-        to   { transform: translateX(0); opacity: 1; }
-    }
+    /* slide menu */
+    .menu-toggle{position:fixed;right:18px;top:18px;z-index:60;padding:10px 12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#001;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+    .slide-menu{position:fixed;right:0;top:0;height:100vh;width:0;overflow:hidden;z-index:70;transition:width .36s cubic-bezier(.2,.9,.2,1);border-left:1px solid rgba(255,255,255,0.03)}
+    .slide-menu.open{width:360px}
+    .menu-inner{height:100%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));backdrop-filter: blur(8px);padding:22px;display:flex;flex-direction:column;gap:14px}
+    .menu-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .menu-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
 
-    @keyframes slideLeft {
-        from { transform: translateX(-40px); opacity: 0; }
-        to   { transform: translateX(0); opacity: 1; }
-    }
+    /* typing indicator (3 jumping dots) */
+    .typing-indicator { display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:10px; background: rgba(255,255,255,0.02); }
+    .dot { width:8px; height:8px; background:#fff; border-radius:50%; opacity:0.6; transform: translateY(0); animation: bounce 1.2s infinite ease-in-out; box-shadow: 0 0 8px rgba(122,91,255,0.3); }
+    .dot:nth-child(1){ animation-delay: 0s; } .dot:nth-child(2){ animation-delay: 0.12s; } .dot:nth-child(3){ animation-delay: 0.24s; }
+    @keyframes bounce { 0%{transform:translateY(0);opacity:0.35} 30%{transform:translateY(-6px);opacity:1} 60%{transform:translateY(0);opacity:0.35} 100%{transform:translateY(0);opacity:0.35} }
 
-    /* ------------ ПОЛЕ ВВОДА ------------ */
-    #bottom {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 60px;
-        background: #10172f;
-        display: flex;
-        gap: 10px;
-        padding: 10px;
-    }
-
-    #input {
-        flex: 1;
-        border-radius: 10px;
-        border: none;
-        padding: 12px;
-        outline: none;
-    }
-
-    /* ------------ МЕНЮ (slide-menu) ------------ */
-    #menu {
-        position: fixed;
-        top: 0;
-        right: -280px;
-        width: 280px;
-        height: 100%;
-        background: #151b33;
-        transition: 0.35s;
-        padding: 20px;
-    }
-
-    #menu.open {
-        right: 0;
-    }
-
-    #menuBtn {
-        position: fixed;
-        right: 20px;
-        top: 20px;
-        background: #3c59ff;
-        border: none;
-        padding: 10px 16px;
-        border-radius: 10px;
-        color: white;
-        cursor: pointer;
-    }
-
-    /* ------------ typing indicator ------------ */
-    .dots {
-        width: 35px;
-        display: flex;
-        justify-content: space-between;
-        margin-left: 5px;
-    }
-
-    .dot {
-        width: 6px;
-        height: 6px;
-        background: white;
-        border-radius: 50%;
-        animation: bounce 0.9s infinite;
-    }
-
-    .dot:nth-child(2) { animation-delay: 0.15s; }
-    .dot:nth-child(3) { animation-delay: 0.3s; }
-
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-6px); }
-    }
-</style>
+    .small{font-size:13px;opacity:0.85}
+    @media (max-width:880px){ .slide-menu.open{width:100vw} .menu-inner{padding:14px} .app{margin:8px} }
+  </style>
 </head>
 <body>
+  <div class="neon-bg" aria-hidden="true">
+    <div class="neon n1"></div>
+    <div class="neon n2"></div>
+    <div class="neon n3"></div>
+  </div>
 
-<button id="menuBtn">Меню</button>
+  <div class="app">
+    <div class="panel" style="flex:1;display:flex;flex-direction:column">
+      <div id="chat" aria-live="polite" role="log"></div>
 
-<div id="menu">
-    <h3>Настройки</h3>
+      <div style="display:flex;flex-direction:column">
+        <div class="input-row">
+          <input id="textInput" type="text" placeholder="Напишите сообщение..." aria-label="Сообщение" />
+          <button id="attachBtn" class="btn.ghost btn">📎</button>
+          <input id="fileInput" type="file" accept="image/*" style="display:none" />
+          <button id="sendBtn" class="btn">Отправить</button>
+          <button id="clearBtn" class="btn clear">Очистить</button>
+        </div>
 
-    <h4>Фото</h4>
-    <input type="file" id="photoInput">
-    <br><br>
+        <div class="controls-row">
+          <button id="downloadBtn" class="btn ghost">Скачать диалог</button>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <span class="small">Автосохранение</span>
+            <input id="autosave" type="checkbox" checked />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <h4>Озвучка ответа</h4>
-    <label><input type="checkbox" id="voiceToggle"> Включить озвучку</label>
-    <br><br>
+  <button class="menu-toggle" id="menuToggle" aria-expanded="false">☰</button>
 
-    <h4>Сохранение диалога</h4>
-    <button id="saveChat">Сохранить .txt</button>
-    <br><br>
-    <button id="clearChat">Очистить историю</button>
-</div>
+  <aside class="slide-menu" id="slideMenu" aria-hidden="true">
+    <div class="menu-inner" role="dialog" aria-label="Настройки">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;color:var(--accent)">Настройки</h3>
+        <button id="closeMenu" class="btn.ghost">✕</button>
+      </div>
 
-<div id="chat"></div>
+      <div class="menu-card">
+        <div style="font-weight:700;margin-bottom:8px">Голос</div>
+        <div class="menu-row">
+          <div>Озвучка ответов</div>
+          <button id="ttsToggle" class="small-btn">Отключено 🔈</button>
+        </div>
+        <div class="menu-row">
+          <div>Остановить TTS</div>
+          <button id="stopTTS" class="small-btn">🛑</button>
+        </div>
+        <div class="menu-row">
+          <div>Голосовой ввод</div>
+          <button id="micToggle" class="small-btn">Вкл 🎤</button>
+        </div>
+      </div>
 
-<div id="bottom">
-    <input id="input" placeholder="Напишите сообщение...">
-    <button onclick="send()">➤</button>
-</div>
+      <div class="menu-card">
+        <div style="font-weight:700;margin-bottom:8px">Фото</div>
+        <div class="menu-row">
+          <div>Прикреплённое изображение</div>
+          <div id="attachedName" class="small">Нет</div>
+        </div>
+        <div style="margin-top:8px">
+          <small class="small">Фото будет отправлено вместе с текстом.</small>
+        </div>
+      </div>
+
+      <div class="menu-card">
+        <div style="font-weight:700;margin-bottom:8px">Сохранение</div>
+        <div class="menu-row">
+          <div>Автосохранение</div>
+          <label><input id="autosaveMenu" type="checkbox" /> LocalStorage</label>
+        </div>
+        <div class="menu-row">
+          <div>Очистить историю</div>
+          <button id="clearStorage" class="small-btn">Очистить</button>
+        </div>
+      </div>
+
+      <div style="margin-top:auto" class="small">Версия: 1.5 · Отправка: text + image (в одном запросе)</div>
+    </div>
+  </aside>
 
 <script>
-let chat = document.getElementById("chat");
-let input = document.getElementById("input");
-let menu = document.getElementById("menu");
-let dotsElement = null;
+/* ---------------- Elements ---------------- */
+const API_URL = 'https://openai-proxy-3.onrender.com/v1/responses';
 
-/* ------------ Slide menu ------------ */
-document.getElementById("menuBtn").onclick = () => {
-    menu.classList.toggle("open");
+const chatEl = document.getElementById('chat');
+const textInput = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const autosaveCheckbox = document.getElementById('autosave');
+const autosaveMenuChk = document.getElementById('autosaveMenu');
+
+const attachBtn = document.getElementById('attachBtn');
+const fileInput = document.getElementById('fileInput');
+const attachedName = document.getElementById('attachedName');
+
+const menuToggle = document.getElementById('menuToggle');
+const slideMenu = document.getElementById('slideMenu');
+const closeMenu = document.getElementById('closeMenu');
+
+const ttsToggle = document.getElementById('ttsToggle');
+const stopTTS = document.getElementById('stopTTS');
+const micToggle = document.getElementById('micToggle');
+const clearStorageBtn = document.getElementById('clearStorage');
+
+let attachedImageBase64 = null;
+let attachedFileName = null;
+let ttsEnabled = false;
+let currentUtterance = null;
+let rec = null;
+let micActive = false;
+let isSending = false;
+
+const STORAGE_KEY = 'smarthub_chat_v1';
+
+/* ---------------- Menu ---------------- */
+menuToggle.onclick = () => {
+  const open = slideMenu.classList.toggle('open');
+  slideMenu.setAttribute('aria-hidden', !open);
+  menuToggle.setAttribute('aria-expanded', open);
+};
+closeMenu.onclick = () => {
+  slideMenu.classList.remove('open');
+  slideMenu.setAttribute('aria-hidden', 'true');
+  menuToggle.setAttribute('aria-expanded', false);
 };
 
-/* ------------ Voice ON/OFF ------------ */
-let speakEnabled = false;
-document.getElementById("voiceToggle").onchange = e => {
-    speakEnabled = e.target.checked;
-};
+/* sync autosave in menu/toolbar */
+autosaveMenuChk.checked = autosaveCheckbox.checked;
+autosaveMenuChk.addEventListener('change', () => autosaveCheckbox.checked = autosaveMenuChk.checked);
+autosaveCheckbox.addEventListener('change', () => autosaveMenuChk.checked = autosaveCheckbox.checked);
 
-/* ------------ Save Chat ------------ */
-document.getElementById("saveChat").onclick = () => {
-    let text = chat.innerText;
-    let blob = new Blob([text], { type: "text/plain" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "chat_history.txt";
-    a.click();
-};
-
-/* ------------ Clear Chat ------------ */
-document.getElementById("clearChat").onclick = () => {
-    chat.innerHTML = "";
-};
-
-/* ------------ Create message bubble ------------ */
-function addMessage(text, who="me") {
-    let div = document.createElement("div");
-    div.className = "msg " + who;
-    div.innerHTML = text;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+/* ---------------- Helpers ---------------- */
+function appendMessage(text, role='ai', save=true) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + (role === 'user' ? 'user' : 'ai');
+  bubble.textContent = text;
+  wrapper.appendChild(bubble);
+  chatEl.appendChild(wrapper);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  if (save) saveChatToStorage();
+  return wrapper;
 }
 
-/* ------------ Add typing indicator ------------ */
-function showTyping() {
-    dotsElement = document.createElement("div");
-    dotsElement.className = "msg ai";
-    dotsElement.innerHTML = `
-        <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-        </div>`;
-    chat.appendChild(dotsElement);
-    chat.scrollTop = chat.scrollHeight;
+function createTypingBubble() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.id = 'typingBubble';
+  wrap.innerHTML = `<div class="bubble ai"><div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  return wrap;
+}
+function showTyping() { removeTyping(); chatEl.appendChild(createTypingBubble()); chatEl.scrollTop = chatEl.scrollHeight; }
+function removeTyping() { const t = document.getElementById('typingBubble'); if (t) t.remove(); }
+
+/* ---------------- Storage ---------------- */
+function saveChatToStorage() {
+  if (!autosaveCheckbox.checked) return;
+  const rows = [...chatEl.querySelectorAll('.msg')].map(m => {
+    const who = m.classList.contains('user') ? 'user' : 'ai';
+    const txt = m.querySelector('.bubble')?.textContent || '';
+    return { who, txt, t: Date.now() };
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+}
+function loadChatFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const arr = JSON.parse(raw);
+    chatEl.innerHTML = '';
+    arr.forEach(it => appendMessage(it.txt, it.who, false));
+    chatEl.scrollTop = chatEl.scrollHeight;
+  } catch (e) { console.warn('load error', e); }
+}
+function clearStorageAndUI() {
+  localStorage.removeItem(STORAGE_KEY);
+  chatEl.innerHTML = '';
 }
 
-function removeTyping() {
-    if (dotsElement) dotsElement.remove();
+/* ---------------- TTS ---------------- */
+function speakText(text) {
+  if (!('speechSynthesis' in window)) return;
+  if (currentUtterance) speechSynthesis.cancel();
+  const limited = text.length > 300 ? text.slice(0, 300) + '...' : text;
+  const ut = new SpeechSynthesisUtterance(limited);
+  ut.lang = 'ru-RU';
+  ut.onend = () => currentUtterance = null;
+  currentUtterance = ut;
+  speechSynthesis.speak(ut);
 }
+stopTTS.onclick = () => { if ('speechSynthesis' in window) speechSynthesis.cancel(); currentUtterance = null; };
+ttsToggle.onclick = () => { ttsEnabled = !ttsEnabled; ttsToggle.textContent = ttsEnabled ? 'Включено 🔊' : 'Отключено 🔈'; };
 
-/* ------------ Send message ------------ */
-async function send() {
-    let text = input.value.trim();
-    input.value = "";
+/* ---------------- Mic (Voice input) ---------------- */
+function initRecognition() {
+  if (rec) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  rec = new SR();
+  rec.lang = 'ru-RU';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  rec.onresult = (e) => {
+    const txt = e.results[0][0].transcript;
+    textInput.value = txt;
+  };
+  rec.onerror = (e) => console.warn('rec error', e);
+  rec.onend = () => { if (micActive) rec.start(); };
+}
+micToggle.onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Ваш браузер не поддерживает голосовой ввод'); return; }
+  initRecognition();
+  micActive = !micActive;
+  micToggle.textContent = micActive ? 'Выключить 🎤' : 'Вкл 🎤';
+  if (micActive) rec.start(); else rec.stop();
+};
 
-    addMessage(text, "me");
+/* ---------------- Attach image ---------------- */
+attachBtn.onclick = () => fileInput.click();
+fileInput.onchange = function() {
+  const f = this.files[0];
+  if (!f) return;
+  attachedFileName = f.name;
+  attachedName.textContent = attachedFileName;
+  const reader = new FileReader();
+  reader.onload = () => {
+    attachedImageBase64 = reader.result.split(',')[1]; // just base64 content (without prefix)
+    // show thumbnail inline (local preview)
+    const dataUrl = reader.result;
+    appendMessage('[Изображение прикреплено: ' + attachedFileName + ']', 'user', true);
+    const thumb = document.createElement('img');
+    thumb.src = dataUrl;
+    thumb.style.maxWidth = '220px';
+    thumb.style.display = 'block';
+    thumb.style.marginTop = '8px';
+    thumb.style.borderRadius = '10px';
+    // append to last user bubble (just added)
+    const last = chatEl.querySelector('.msg.user:last-child .bubble');
+    if (last) last.appendChild(thumb);
+  };
+  reader.readAsDataURL(f);
+};
 
-    showTyping();
+/* ---------------- Send message (text + attached image together) ---------------- */
+async function sendMessage(overrideText = null) {
+  if (isSending) return;
+  const text = (overrideText !== null) ? overrideText : textInput.value.trim();
+  if (!text && !attachedImageBase64) return; // nothing to send
 
-    // Fake AI reply to demonstrate UI
-    setTimeout(() => {
-        removeTyping();
-        addMessage("Ответ ИИ на: " + text, "ai");
+  // show user message
+  appendMessage(text || '[Изображение]', 'user', true);
+  // if image was attached, its preview is shown already
+  // clear input and attachment from UI (but keep base64 until server ack or we clear)
+  textInput.value = '';
+  showTyping();
+  isSending = true;
 
-        if (speakEnabled) {
-            let utter = new SpeechSynthesisUtterance("Ответ ИИ на " + text);
-            speechSynthesis.speak(utter);
+  try {
+    // Build requests content following Responses API structure (variant 2: text + image)
+    const contentParts = [];
+    if (text) contentParts.push({ type: 'input_text', text: text });
+    if (attachedImageBase64) {
+      contentParts.push({ type: 'input_image', image_base64: attachedImageBase64 });
+    }
+
+    const body = {
+      model: 'gpt-4o-mini',
+      input: [
+        {
+          role: 'user',
+          content: contentParts
         }
-    }, 900);
+      ]
+    };
+
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const raw = await res.text();
+    removeTyping();
+
+    if (!res.ok) {
+      // show server response for debugging
+      appendMessage(`Ошибка сервера: ${res.status} ${res.statusText}`, 'ai', true);
+      if (raw) appendMessage(`Ответ сервера: ${raw}`, 'ai', true);
+      console.error('photo/text send error', res.status, raw);
+    } else {
+      let data;
+      try { data = JSON.parse(raw || '{}'); } catch(e) { data = {}; }
+      const answer = data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || 'Ошибка: пустой ответ';
+      appendMessage(answer, 'ai', true);
+      if (ttsEnabled) speakText(answer);
+      // on success, clear attached image
+      attachedImageBase64 = null;
+      attachedFileName = null;
+      attachedName.textContent = 'Нет';
+    }
+  } catch (err) {
+    removeTyping();
+    appendMessage('Ошибка сервера — проверьте соединение', 'ai', true);
+    console.error(err);
+  } finally {
+    isSending = false;
+  }
 }
 
-/* ------------ Photo upload ------------ */
-document.getElementById("photoInput").onchange = function () {
-    let file = this.files[0];
-    if (!file) return;
+/* ---------------- Buttons wiring ---------------- */
+sendBtn.onclick = () => sendMessage();
+textInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+clearBtn.onclick = () => { chatEl.innerHTML = ''; saveChatToStorage(); };
 
-    let reader = new FileReader();
-    reader.onload = () => {
-        let base64 = reader.result;
-
-        addMessage(`<img src="${base64}" style="max-width:200px;border-radius:10px;">`, "me");
-
-        showTyping();
-
-        setTimeout(() => {
-            removeTyping();
-            addMessage("Фото обработано ИИ (демо-режим)", "ai");
-        }, 1100);
-    };
-    reader.readAsDataURL(file);
+/* Download chat */
+downloadBtn.onclick = () => {
+  const rows = [...chatEl.querySelectorAll('.msg')].map(m => {
+    const who = m.classList.contains('user') ? 'Вы' : 'ИИ';
+    const txt = m.querySelector('.bubble')?.textContent || '';
+    return `${who}: ${txt}`;
+  }).join('\n\n');
+  const blob = new Blob([rows], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'dialog.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
 };
-</script>
 
+/* clear storage */
+clearStorageBtn.onclick = () => {
+  if (confirm('Удалить сохранённую историю?')) clearStorageAndUI();
+};
+
+/* double click AI bubble to speak */
+chatEl.addEventListener('dblclick', (e) => {
+  const b = e.target.closest('.bubble');
+  if (!b) return;
+  const parent = b.closest('.msg');
+  if (parent && parent.classList.contains('ai')) {
+    speakText(b.textContent || '');
+  }
+});
+
+/* ---------------- Init on load ---------------- */
+window.addEventListener('load', () => {
+  // sync autosave checkboxes
+  autosaveMenuChk.checked = autosaveCheckbox.checked;
+  // load saved chat
+  loadChatFromStorage();
+});
+
+/* expose for debugging */
+console.log('SmartHub AI client ready. API:', API_URL);
+</script>
 </body>
 </html>
