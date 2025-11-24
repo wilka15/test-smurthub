@@ -48,6 +48,20 @@
     /* toggle button top-right */
     .menu-toggle{position:fixed;right:16px;top:16px;z-index:60;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
 
+    /* typing indicator — 3 jumping dots (Telegram-like) */
+    .typing-indicator { display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:10px; background: rgba(255,255,255,0.06); }
+    .typing-indicator .dot { width:8px; height:8px; background:#fff; border-radius:50%; opacity:0.6; transform: translateY(0); animation: bounce 1.2s infinite ease-in-out; box-shadow: 0 0 8px rgba(122,91,255,0.3); }
+    .typing-indicator .dot:nth-child(1){ animation-delay: 0s; }
+    .typing-indicator .dot:nth-child(2){ animation-delay: 0.12s; }
+    .typing-indicator .dot:nth-child(3){ animation-delay: 0.24s; }
+
+    @keyframes bounce {
+      0% { transform: translateY(0); opacity:0.4; }
+      30% { transform: translateY(-6px); opacity:1; }
+      60% { transform: translateY(0); opacity:0.4; }
+      100% { transform: translateY(0); opacity:0.4; }
+    }
+
     /* animations */
     @keyframes slideInRight { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity:1; } }
     @keyframes slideInLeft { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity:1; } }
@@ -146,13 +160,39 @@ function addMessage(text, role){
   b.textContent = text; w.appendChild(b); chat.appendChild(w); chat.scrollTop = chat.scrollHeight;
 }
 
+/* create typing bubble with 3 jumping dots */
+function createTypingBubble(){
+  const typing = document.createElement('div');
+  typing.className = 'msg ai';
+  typing.id = 'typingBubble';
+  typing.innerHTML = `
+    <div class="bubble ai">
+      <div class="typing-indicator">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  `;
+  return typing;
+}
+
 async function sendMessage(textOverride){
   const txt = textOverride || userInput.value.trim(); if(!txt) return; addMessage(txt,'user'); userInput.value='';
-  const typing = document.createElement('div'); typing.className='msg ai'; typing.innerHTML='<div class="bubble">...</div>'; chat.appendChild(typing);
+  const typing = createTypingBubble();
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+
   try{
     const res = await fetch('https://openai-proxy-3.onrender.com/v1/responses',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'gpt-4o-mini', input:txt }) });
-    const data = await res.json(); typing.remove(); const ans = data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || 'Ошибка: нет ответа'; addMessage(ans,'ai');
-  }catch(e){ typing.remove(); addMessage('Ошибка сервера','ai'); console.error(e); }
+    const data = await res.json();
+    // remove typing
+    const t = document.getElementById('typingBubble'); if(t) t.remove();
+
+    const ans = data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || 'Ошибка: нет ответа';
+    addMessage(ans,'ai');
+    if(ttsEnabled) speakText(ans);
+  }catch(e){ const t = document.getElementById('typingBubble'); if(t) t.remove(); addMessage('Ошибка сервера','ai'); console.error(e); }
 }
 
 sendBtn.onclick = ()=> sendMessage();
@@ -174,7 +214,7 @@ micToggle.onclick = ()=>{
 
 /* Photo */
 photoSend.onclick = ()=> photoFile.click();
-photoFile.onchange = async function(){ const file=this.files[0]; if(!file) return; addMessage('📷 Фото отправлено','user'); const reader=new FileReader(); reader.onload=async ()=>{ const base64=reader.result.split(',')[1]; const typing=document.createElement('div'); typing.className='msg ai'; typing.innerHTML='<div class="bubble">...</div>'; chat.appendChild(typing); try{ const res=await fetch('https://openai-proxy-3.onrender.com/v1/responses',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'gpt-4o-mini', input:[{ type:'input_image', image_base64:base64, instruction:'Опиши изображение' }] }) }); const data=await res.json(); typing.remove(); const ans=data.output?.[0]?.content?.[0]?.text || 'Ошибка: нет ответа'; addMessage(ans,'ai'); if(ttsEnabled) speakText(ans); }catch(e){ typing.remove(); addMessage('Ошибка сервера','ai'); } }; reader.readAsDataURL(file); };
+photoFile.onchange = async function(){ const file=this.files[0]; if(!file) return; addMessage('📷 Фото отправлено','user'); const reader=new FileReader(); reader.onload=async ()=>{ const base64=reader.result.split(',')[1]; const typing=createTypingBubble(); chat.appendChild(typing); try{ const res=await fetch('https://openai-proxy-3.onrender.com/v1/responses',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'gpt-4o-mini', input:[{ type:'input_image', image_base64:base64, instruction:'Опиши изображение' }] }) }); const data=await res.json(); const t = document.getElementById('typingBubble'); if(t) t.remove(); const ans=data.output?.[0]?.content?.[0]?.text || 'Ошибка: нет ответа'; addMessage(ans,'ai'); if(ttsEnabled) speakText(ans); }catch(e){ const t = document.getElementById('typingBubble'); if(t) t.remove(); addMessage('Ошибка сервера','ai'); } }; reader.readAsDataURL(file); };
 
 </script>
 </body>
