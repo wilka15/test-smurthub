@@ -138,11 +138,11 @@ body.light input[type=text] { background: rgba(0,0,0,0.1); }
 }
 
 .btn.clear {
-  background: linear-gradient(135deg, #ff3b3b, #ff6b6b);
+  background: linear-gradient(135deg, #cccccc, #e0e0e0);
   color: white;
   padding: 10px 18px;
   font-weight: 600;
-  box-shadow: 0 4px 10px rgba(255,0,0,0.3);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   transition: 0.25s;
 }
 .btn.clear:hover {
@@ -174,6 +174,8 @@ body.light .settings { background: var(--panel-light); }
       <input id="textInput" type="text" placeholder="Введите сообщение..." />
       <button class="btn send" id="sendBtn">➤</button>
       <button class="btn" id="photoBtn">📷</button>
+      <button class="btn" id="micBtn">🎤</button>
+      <button class="btn" id="speakBtn">🔊</button>
       <input type="file" id="photoInput" class="photo-input" accept="image/*" />
     </div>
   </div>
@@ -260,6 +262,29 @@ themeSwitch.onchange = () => {
 // ---------- Очистить чат ----------
 document.getElementById("clearBtn").onclick = () => {
   chat.innerHTML = "";
+};
+
+// ---------- Голосовой ввод ----------
+document.getElementById("micBtn").onclick = () => {
+  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Rec) return alert("Голосовой ввод не поддерживается");
+
+  const rec = new Rec();
+  rec.lang = "ru-RU";
+  rec.interimResults = false;
+  rec.onresult = e => {
+    textInput.value = e.results[0][0].transcript;
+  };
+  rec.start();
+};
+
+// ---------- Озвучка ответа ----------
+document.getElementById("speakBtn").onclick = () => {
+  const last = [...document.querySelectorAll('.msg.ai .bubble')].pop();
+  if (!last) return;
+  const utter = new SpeechSynthesisUtterance(last.textContent);
+  utter.lang = "ru-RU";
+  speechSynthesis.speak(utter);
 };
 
 // ---------- Фото ----------
