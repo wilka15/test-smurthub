@@ -3,393 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartHub AI</title>
+  <title>Neon AI Chat — С выезжающим меню</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
-
   <style>
-    :root {
-      --accent: #7a5bff;
-      --accent2: #00a6ff;
-      --bg: linear-gradient(135deg, #120028, #001233);
-      --panel: rgba(255,255,255,0.06);
-      --text: #e9faff;
-    }
+    :root{ --accent:#7a5bff; --accent2:#00a6ff; --bg-a:#090014; --panel:rgba(255,255,255,0.06); --text:#e9faff; }
+    *{box-sizing:border-box}
+    body{margin:0;height:100vh;background:linear-gradient(135deg,#120028,#001233);font-family:'Orbitron',sans-serif;color:var(--text);display:flex;align-items:center;justify-content:center}
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: 'Orbitron', sans-serif;
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      overflow: hidden;
-    }
+    /* layout */
+    .wrap{width:94%;max-width:1200px;height:88vh;position:relative}
+    .main{height:100%;display:flex;gap:24px}
 
-    /* ---------- ВЫЕЗЖАЮЩЕЕ МЕНЮ ---------- */
+    /* chat panel */
+    .chat-panel{flex:1; background:var(--panel);backdrop-filter:blur(18px);padding:18px;border-radius:16px;border:1px solid rgba(0,255,255,0.06);display:flex;flex-direction:column}
+    #chat{flex:1;overflow:auto;padding:6px 4px}
+    .msg{display:flex;margin:10px 6px}
+    .msg.user{justify-content:flex-end; animation: slideInRight .28s cubic-bezier(.22,.9,.24,1);} 
+    .msg.ai{animation: slideInLeft .28s cubic-bezier(.22,.9,.24,1);} 
+    .bubble{max-width:70%;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.06);backdrop-filter:blur(6px)}
+    .bubble.ai{background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))}
 
-    .side-menu {
-      width: 280px;
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(18px);
-      border-left: 2px solid rgba(0,255,255,0.25);
-      position: fixed;
-      right: -280px;
-      height: 100%;
-      padding: 20px;
-      transition: 0.4s ease;
-      box-shadow: -4px 0 20px rgba(0,255,255,0.2);
-    }
+    .input-bar{display:flex;gap:10px;margin-top:12px}
+    .input-bar input{flex:1;padding:12px;border-radius:10px;border:none;background:rgba(255,255,255,0.09);color:var(--text)}
+    .input-bar button{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:700;min-width:110px}
 
-    .side-menu.open {
-      right: 0;
-    }
+    /* neon blobs */
+    .neon-blobs{position:fixed;inset:0;z-index:-2;pointer-events:none}
+    .neon-blobs .blob{position:absolute;width:520px;height:520px;border-radius:50%;filter:blur(80px);mix-blend-mode:screen}
+    .blob.a{left:-120px;top:-80px;background:radial-gradient(circle,#7a5bff,transparent 40%)}
+    .blob.b{right:-140px;bottom:-40px;background:radial-gradient(circle,#00a6ff,transparent 40%)}
+    .blob.c{left:40%;top:60%;background:radial-gradient(circle,#b0ff7a,transparent 35%)}
 
-    .menu-btn {
-      position: absolute;
-      right: 20px;
-      top: 20px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      font-weight: bold;
-    }
+    /* slide menu (right) */
+    .slide-menu{position:fixed;right:0;top:0;height:100vh;width:0;background:linear-gradient(180deg, rgba(10,4,20,0.95), rgba(5,2,10,0.95));box-shadow:-40px 0 80px rgba(0,0,0,0.6);overflow:hidden;transition:width .4s cubic-bezier(.2,.9,.2,1);z-index:40;border-left:1px solid rgba(255,255,255,0.03)}
+    .slide-menu.open{width:340px}
+    .menu-inner{padding:22px;color:var(--text)}
+    .menu-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .menu-header h3{margin:0;color:var(--accent)}
+    .menu-section{margin-top:18px}
+    .menu-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.02)}
+    .menu-row .label{opacity:0.9}
+    .menu-row button{padding:8px 10px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-weight:600}
 
-    /* ------------ ЧАТ ------------- */
+    /* toggle button top-right */
+    .menu-toggle{position:fixed;right:16px;top:16px;z-index:60;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
 
-    .chat-wrapper {
-      margin: auto;
-      width: 90%;
-      max-width: 900px;
-    }
+    /* animations */
+    @keyframes slideInRight { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity:1; } }
+    @keyframes slideInLeft { from { transform: translateX(-40px); opacity: 0; } to { transform: translateX(0); opacity:1; } }
 
-    .chat-container {
-      background: var(--panel);
-      backdrop-filter: blur(20px);
-      padding: 20px;
-      border-radius: 20px;
-      border: 1px solid rgba(0,255,255,0.2);
-      box-shadow: 0 0 30px rgba(0,255,255,0.15);
-      height: 88vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding-right: 8px;
-    }
-
-    .msg {
-      display: flex;
-      margin-bottom: 14px;
-      opacity: 0;
-      transform: translateY(10px);
-      animation: slideIn 0.4s forwards ease;
-    }
-
-    .msg.user { justify-content: flex-end; }
-    .msg.ai { justify-content: flex-start; }
-
-    .msg.user .bubble {
-      animation: fromRight 0.35s ease;
-    }
-    .msg.ai .bubble {
-      animation: fromLeft 0.35s ease;
-    }
-
-    @keyframes fromRight {
-      0% { transform: translateX(40px); opacity: 0; }
-      100% { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes fromLeft {
-      0% { transform: translateX(-40px); opacity: 0; }
-      100% { transform: translateX(0); opacity: 1; }
-    }
-
-    .bubble {
-      background: rgba(255,255,255,0.1);
-      padding: 12px 16px;
-      border-radius: 12px;
-      max-width: 70%;
-      backdrop-filter: blur(10px);
-    }
-
-    @keyframes slideIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* ------- typing dots (как в Telegram) -------- */
-
-    .typing-indicator {
-      display: inline-flex;
-      gap: 6px;
-      padding: 10px 14px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 12px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      background: #fff;
-      border-radius: 50%;
-      opacity: 0.6;
-      animation: bounce 1.4s infinite ease-in-out;
-    }
-
-    .dot:nth-child(1) { animation-delay: 0s; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes bounce {
-      0%   { transform: translateY(0); opacity: 0.4; }
-      30%  { transform: translateY(-5px); opacity: 1;   }
-      60%  { transform: translateY(0); opacity: 0.4; }
-      100% { transform: translateY(0); opacity: 0.4; }
-    }
-
-    .input-bar {
-      display: flex;
-      gap: 10px;
-    }
-
-    input {
-      flex: 1;
-      padding: 12px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.15);
-      border: none;
-      color: var(--text);
-    }
-
-    .btn {
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      cursor: pointer;
-    }
-
-    .clear-btn {
-      background: rgba(255,255,255,0.2);
-      margin-top: 6px;
-      border-radius: 12px;
-      padding: 10px;
-      border: none;
-      cursor: pointer;
-      color: var(--text);
-    }
-
-    /* КНОПКИ МЕНЮ */
-    .menu-section {
-      margin-bottom: 20px;
-    }
-    .menu-section h3 { margin-bottom: 10px; }
-
-    .toggle-btn {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.18);
-      border: 1px solid rgba(0,255,255,0.2);
-      margin-bottom: 10px;
-      color: white;
-      cursor: pointer;
-    }
-
+    /* responsive */
+    @media (max-width:880px){ .slide-menu.open{width:100%} .menu-toggle{right:12px} }
   </style>
 </head>
 <body>
 
-<button class="menu-btn" id="menuToggle">≡</button>
+  <button class="menu-toggle" id="menuToggle">☰</button>
 
-<div class="side-menu" id="sideMenu">
-  <h2>Настройки</h2>
-  <div class="menu-section">
-    <h3>Голос</h3>
-    <button id="voiceToggle" class="toggle-btn">Озвучка: выкл</button>
-    <button id="micToggle" class="toggle-btn">Микрофон: выкл</button>
+  <div class="neon-blobs">
+    <div class="blob a"></div>
+    <div class="blob b"></div>
+    <div class="blob c"></div>
   </div>
 
-  <div class="menu-section">
-    <h3>Фото</h3>
-    <input id="imgInput" type="file" accept="image/*" class="toggle-btn" />
-  </div>
-</div>
-
-<div class="chat-wrapper">
-  <div class="chat-container">
-    <div id="chat"></div>
-
-    <div class="input-bar">
-      <input id="userInput" placeholder="Введите..." />
-      <button class="btn" id="sendBtn">→</button>
+  <div class="wrap">
+    <div class="main">
+      <div class="chat-panel">
+        <div id="chat"></div>
+        <div class="input-bar">
+          <input id="userInput" placeholder="Введите сообщение и нажмите Enter или кнопку" />
+          <button id="sendBtn">Отправить</button>
+          <button id="clearBtn" style="background:rgba(255,255,255,0.08);color:var(--text);font-weight:600">Очистить</button>
+        </div>
+      </div>
+      <!-- right side reserved for spacing (menu overlays) -->
+      <div style="width:0"></div>
     </div>
-
-    <button class="clear-btn" id="clearBtn">Очистить чат</button>
   </div>
-</div>
 
+  <!-- Slide Menu -->
+  <aside class="slide-menu" id="slideMenu">
+    <div class="menu-inner">
+      <div class="menu-header">
+        <h3>Настройки</h3>
+        <button id="menuClose" style="background:transparent;border:none;color:var(--text);font-size:18px">✕</button>
+      </div>
+
+      <div class="menu-section">
+        <div class="menu-row">
+          <div class="label">Голосовой ввод</div>
+          <button id="micToggle">Вкл 🎤</button>
+        </div>
+
+        <div class="menu-row">
+          <div class="label">Озвучка ответов</div>
+          <button id="ttsToggle">Отключено 🔈</button>
+        </div>
+
+        <div class="menu-row">
+          <div class="label">Остановить озвучку</div>
+          <button id="stopSpeak">🛑 Стоп</button>
+        </div>
+
+        <div class="menu-row">
+          <div class="label">Загрузить фото</div>
+          <button id="photoSend">📷</button>
+          <input id="photoFile" type="file" accept="image/*" style="display:none">
+        </div>
+      </div>
+
+      <div style="margin-top:20px;font-size:13px;opacity:0.9">Версия: 1.2 — Slide menu</div>
+    </div>
+  </aside>
 
 <script>
-const chat = document.getElementById("chat");
-const sideMenu = document.getElementById("sideMenu");
+// elements
+const menuToggle = document.getElementById('menuToggle');
+const slideMenu = document.getElementById('slideMenu');
+const menuClose = document.getElementById('menuClose');
+const micToggle = document.getElementById('micToggle');
+const ttsToggle = document.getElementById('ttsToggle');
+const stopSpeak = document.getElementById('stopSpeak');
+const photoSend = document.getElementById('photoSend');
+const photoFile = document.getElementById('photoFile');
 
-let speechEnabled = false;
-let micEnabled = false;
-let synth = window.speechSynthesis;
+const chat = document.getElementById('chat');
+const sendBtn = document.getElementById('sendBtn');
+const userInput = document.getElementById('userInput');
+const clearBtn = document.getElementById('clearBtn');
 
-/* ---------- АНИМАЦИЯ typing ---------- */
+let ttsEnabled = false;
+let currentUtterance = null;
+let rec = null;
+let micActive = false;
 
-function showTyping() {
-  const wrap = document.createElement("div");
-  wrap.className = "msg ai";
-  wrap.id = "typingWrap";
-  wrap.innerHTML = `
-    <div class="bubble">
-      <div class="typing-indicator">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-      </div>
-    </div>
-  `;
-  chat.appendChild(wrap);
-  chat.scrollTop = chat.scrollHeight;
+menuToggle.onclick = ()=> slideMenu.classList.toggle('open');
+menuClose.onclick = ()=> slideMenu.classList.remove('open');
+
+function addMessage(text, role){
+  const w = document.createElement('div'); w.className = 'msg ' + role;
+  const b = document.createElement('div'); b.className = 'bubble ' + (role === 'ai' ? 'ai' : '');
+  b.textContent = text; w.appendChild(b); chat.appendChild(w); chat.scrollTop = chat.scrollHeight;
 }
 
-function removeTyping() {
-  const t = document.getElementById("typingWrap");
-  if (t) t.remove();
+async function sendMessage(textOverride){
+  const txt = textOverride || userInput.value.trim(); if(!txt) return; addMessage(txt,'user'); userInput.value='';
+  const typing = document.createElement('div'); typing.className='msg ai'; typing.innerHTML='<div class="bubble">...</div>'; chat.appendChild(typing);
+  try{
+    const res = await fetch('https://openai-proxy-3.onrender.com/v1/responses',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'gpt-4o-mini', input:txt }) });
+    const data = await res.json(); typing.remove(); const ans = data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || 'Ошибка: нет ответа'; addMessage(ans,'ai');
+  }catch(e){ typing.remove(); addMessage('Ошибка сервера','ai'); console.error(e); }
 }
 
-/* ---------- ЧАТ ---------- */
+sendBtn.onclick = ()=> sendMessage();
+userInput.addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
+clearBtn.onclick = ()=> chat.innerHTML='';
 
-function addMessage(text, role) {
-  let wrap = document.createElement("div");
-  wrap.className = "msg " + role;
+/* TTS */
+function speakText(text){ if(currentUtterance){ speechSynthesis.cancel(); } currentUtterance=new SpeechSynthesisUtterance(text); currentUtterance.lang='ru-RU'; speechSynthesis.speak(currentUtterance); }
 
-  let b = document.createElement("div");
-  b.className = "bubble";
-  b.textContent = text;
+ttsToggle.onclick = ()=>{ ttsEnabled = !ttsEnabled; ttsToggle.textContent = ttsEnabled ? 'Включено 🔊' : 'Отключено 🔈'; };
+stopSpeak.onclick = ()=> speechSynthesis.cancel();
 
-  wrap.appendChild(b);
-  chat.appendChild(wrap);
-  chat.scrollTop = chat.scrollHeight;
-
-  if (role === "ai" && speechEnabled) {
-    let utter = new SpeechSynthesisUtterance(text);
-    synth.speak(utter);
-  }
+/* Mic */
+micToggle.onclick = ()=>{
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){ alert('Ваш браузер не поддерживает голосовой ввод'); return; }
+  if(!rec){ const SR = window.SpeechRecognition || window.webkitSpeechRecognition; rec = new SR(); rec.lang='ru-RU'; rec.interimResults=false; rec.onresult=e=>sendMessage(e.results[0][0].transcript); rec.onend=()=>{ if(micActive) rec.start(); } }
+  if(!micActive){ micActive=true; micToggle.textContent='Выключить 🎤'; rec.start(); } else { micActive=false; micToggle.textContent='Вкл 🎤'; rec.stop(); }
 }
 
-async function sendMessage() {
-  const inp = document.getElementById("userInput");
-  let text = inp.value.trim();
-  if (!text) return;
-
-  addMessage(text, "user");
-  inp.value = "";
-
-  showTyping();
-
-  try {
-    const res = await fetch("https://openai-proxy-3.onrender.com/v1/responses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-4o-mini", input: text })
-    });
-
-    const data = await res.json();
-    removeTyping();
-
-    let answer =
-      data.output?.[0]?.content?.[0]?.text ||
-      data.choices?.[0]?.message?.content ||
-      "Ошибка";
-
-    addMessage(answer, "ai");
-
-  } catch {
-    removeTyping();
-    addMessage("Ошибка соединения", "ai");
-  }
-}
-
-/* ------- ВЫЕЗЖАЮЩЕЕ МЕНЮ ------- */
-
-document.getElementById("menuToggle").onclick = () => {
-  sideMenu.classList.toggle("open");
-};
-
-/* ------- ОЧИСТКА ЧАТА ------- */
-
-document.getElementById("clearBtn").onclick = () => {
-  chat.innerHTML = "";
-};
-
-/* ------- ОТПРАВКА ------- */
-
-document.getElementById("sendBtn").onclick = sendMessage;
-document.getElementById("userInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") sendMessage();
-});
-
-/* ------- ОЗВУЧКА ------- */
-
-document.getElementById("voiceToggle").onclick = () => {
-  speechEnabled = !speechEnabled;
-  document.getElementById("voiceToggle").textContent =
-    "Озвучка: " + (speechEnabled ? "вкл" : "выкл");
-};
-
-/* ------- МИКРОФОН (голосовой ввод) ------- */
-
-let recognition;
-
-if ("webkitSpeechRecognition" in window) {
-  recognition = new webkitSpeechRecognition();
-  recognition.lang = "ru-RU";
-  recognition.interimResults = false;
-
-  recognition.onresult = e => {
-    document.getElementById("userInput").value = e.results[0][0].transcript;
-  };
-}
-
-document.getElementById("micToggle").onclick = () => {
-  if (!recognition) return alert("Микрофон не поддерживается");
-
-  micEnabled = !micEnabled;
-  document.getElementById("micToggle").textContent =
-    "Микрофон: " + (micEnabled ? "вкл" : "выкл");
-
-  if (micEnabled) recognition.start();
-  else recognition.stop();
-};
-
-/* ------- ЗАГРУЗКА ФОТО ------- */
-
-document.getElementById("imgInput").onchange = async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  addMessage("📷 Фото загружено, отправляю ИИ...", "user");
-
-  showTyping();
-
-  // если нужен реальный анализ фото — скажи, вставлю OpenAI Vision
-  setTimeout(() => {
-    removeTyping();
-    addMessage("ИИ обработал изображение! (заглушка)", "ai");
-  }, 1200);
-};
+/* Photo */
+photoSend.onclick = ()=> photoFile.click();
+photoFile.onchange = async function(){ const file=this.files[0]; if(!file) return; addMessage('📷 Фото отправлено','user'); const reader=new FileReader(); reader.onload=async ()=>{ const base64=reader.result.split(',')[1]; const typing=document.createElement('div'); typing.className='msg ai'; typing.innerHTML='<div class="bubble">...</div>'; chat.appendChild(typing); try{ const res=await fetch('https://openai-proxy-3.onrender.com/v1/responses',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'gpt-4o-mini', input:[{ type:'input_image', image_base64:base64, instruction:'Опиши изображение' }] }) }); const data=await res.json(); typing.remove(); const ans=data.output?.[0]?.content?.[0]?.text || 'Ошибка: нет ответа'; addMessage(ans,'ai'); if(ttsEnabled) speakText(ans); }catch(e){ typing.remove(); addMessage('Ошибка сервера','ai'); } }; reader.readAsDataURL(file); };
 
 </script>
-
 </body>
 </html>
