@@ -3,22 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <title>AI Chat</title>
+
+<!-- Главное, что ломало мобильную верстку -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
 <style>
-    body {
+    html, body {
         margin: 0;
-        font-family: Arial;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        touch-action: manipulation;
         background: #0a0f24;
         color: white;
-        overflow: hidden;
+        font-family: Arial;
     }
 
     /* ------------ ЧАТ ------------ */
     #chat {
         position: absolute;
         left: 0;
-        top: 0;
-        bottom: 60px;
         right: 0;
+        top: 5px; /* фиксируем огромный отступ */
+        bottom: 60px;
         padding: 20px;
         overflow-y: auto;
     }
@@ -75,7 +83,7 @@
         outline: none;
     }
 
-    /* ------------ МЕНЮ (slide-menu) ------------ */
+    /* ------------ МЕНЮ ------------ */
     #menu {
         position: fixed;
         top: 0;
@@ -129,64 +137,31 @@
         50% { transform: translateY(-6px); }
     }
 
-    /* ===========================================
-       📱 АДАПТИВ ДЛЯ МОБИЛЬНЫХ (ИНТЕРФЕЙС НЕ МЕНЯЮ!)
-       =========================================== */
+    /* ------------ АДАПТИВ ------------ */
     @media (max-width: 768px) {
-        #chat {
-            padding: 12px;
-        }
+        #chat { padding: 12px; }
         .msg {
             max-width: 80%;
             font-size: 14px;
             padding: 10px 12px;
-            margin: 8px 0;
         }
-        #bottom {
-            height: 55px;
-            padding: 8px;
-            gap: 6px;
-        }
-        #input {
-            padding: 10px;
-            font-size: 14px;
-        }
-        #menu {
-            width: 240px;
-            padding: 16px;
-        }
-        #menuBtn {
-            right: 12px;
-            top: 12px;
-            padding: 8px 14px;
-            font-size: 14px;
-        }
-        img {
-            max-width: 160px !important;
-        }
+        #bottom { height: 55px; padding: 8px; gap: 6px; }
+        #input { padding: 10px; font-size: 14px; }
+        #menu { width: 240px; }
+        #menuBtn { right: 12px; top: 12px; }
+        img { max-width: 160px !important; }
     }
 
     @media (max-width: 480px) {
-        #menu {
-            width: 210px;
-        }
+        #menu { width: 210px; }
         .msg {
             max-width: 90%;
             font-size: 13px;
             padding: 9px 11px;
         }
-        #input {
-            font-size: 13px;
-            padding: 9px;
-        }
-        #bottom button {
-            padding: 0 12px;
-            font-size: 16px;
-        }
-        #menuBtn {
-            padding: 7px 12px;
-        }
+        #input { font-size: 13px; padding: 9px; }
     }
+
 </style>
 </head>
 <body>
@@ -207,6 +182,7 @@
     <h4>Сохранение диалога</h4>
     <button id="saveChat">Сохранить .txt</button>
     <br><br>
+
     <button id="clearChat">Очистить историю</button>
 </div>
 
@@ -218,17 +194,18 @@
 </div>
 
 <script>
+
 let chat = document.getElementById("chat");
 let input = document.getElementById("input");
 let menu = document.getElementById("menu");
 let dotsElement = null;
 
-/* ------------ Slide menu ------------ */
+/* ------------ Меню ------------ */
 document.getElementById("menuBtn").onclick = () => {
     menu.classList.toggle("open");
 };
 
-/* ------------ Voice ON/OFF ------------ */
+/* ------------ Voice ------------ */
 let speakEnabled = false;
 document.getElementById("voiceToggle").onchange = e => {
     speakEnabled = e.target.checked;
@@ -249,7 +226,7 @@ document.getElementById("clearChat").onclick = () => {
     chat.innerHTML = "";
 };
 
-/* ------------ Create message bubble ------------ */
+/* ------------ Add message ------------ */
 function addMessage(text, who="me") {
     let div = document.createElement("div");
     div.className = "msg " + who;
@@ -258,7 +235,7 @@ function addMessage(text, who="me") {
     chat.scrollTop = chat.scrollHeight;
 }
 
-/* ------------ Add typing indicator ------------ */
+/* ------------ Typing ------------ */
 function showTyping() {
     dotsElement = document.createElement("div");
     dotsElement.className = "msg ai";
@@ -276,9 +253,10 @@ function removeTyping() {
     if (dotsElement) dotsElement.remove();
 }
 
-/* ------------ Send message ------------ */
+/* ------------ Send ------------ */
 async function send() {
     let text = input.value.trim();
+    if (!text) return;
     input.value = "";
 
     addMessage(text, "me");
@@ -289,8 +267,7 @@ async function send() {
         addMessage("Ответ ИИ на: " + text, "ai");
 
         if (speakEnabled) {
-            let utter = new SpeechSynthesisUtterance("Ответ ИИ на " + text);
-            speechSynthesis.speak(utter);
+            speechSynthesis.speak(new SpeechSynthesisUtterance("Ответ ИИ на " + text));
         }
     }, 900);
 }
@@ -302,12 +279,9 @@ document.getElementById("photoInput").onchange = function () {
 
     let reader = new FileReader();
     reader.onload = () => {
-        let base64 = reader.result;
-
-        addMessage(`<img src="${base64}" style="max-width:200px;border-radius:10px;">`, "me");
+        addMessage(`<img src="${reader.result}" style="max-width:200px;border-radius:10px;">`, "me");
 
         showTyping();
-
         setTimeout(() => {
             removeTyping();
             addMessage("Фото обработано ИИ (демо-режим)", "ai");
@@ -315,6 +289,7 @@ document.getElementById("photoInput").onchange = function () {
     };
     reader.readAsDataURL(file);
 };
+
 </script>
 
 </body>
