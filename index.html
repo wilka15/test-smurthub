@@ -6,19 +6,16 @@
 <title>SmartHub AI — Full</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --accent:#7a5bff; --accent2:#00a6ff; --bg1:#06020a; --panel: rgba(255,255,255,0.04);
-  --glass: rgba(255,255,255,0.06); --text:#eaf6ff;
-}
+:root{--accent:#7a5bff;--accent2:#00a6ff;--bg1:#06020a;--panel: rgba(255,255,255,0.04);--glass: rgba(255,255,255,0.06);--text:#eaf6ff;}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:linear-gradient(135deg,#070014,#001233);font-family:"Orbitron",system-ui,Arial;color:var(--text);-webkit-font-smoothing:antialiased}
 .app{width:94%;max-width:1200px;margin:24px auto;height:88vh;position:relative;display:flex;gap:20px}
 .chat-wrap{flex:1;display:flex;flex-direction:column;gap:12px}
-.panel{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:18px;border:1px solid rgba(122,91,255,0.12);box-shadow:0 8px 40px rgba(15,10,30,0.6); height:100%; display:flex; flex-direction:column; backdrop-filter: blur(8px);}
-#chat{flex:1; overflow:auto; padding-right:8px;}
+.panel{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:18px;border:1px solid rgba(122,91,255,0.12);box-shadow: 0 8px 40px rgba(15,10,30,0.6);height:100%;display:flex;flex-direction:column;backdrop-filter: blur(8px);}
+#chat{flex:1;overflow:auto;padding-right:8px;}
 .msg{display:flex;margin:10px 6px;opacity:1}
 .msg.user{justify-content:flex-end}
-.bubble{max-width:72%; padding:12px 14px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); color:var(--text); box-shadow:0 6px 18px rgba(0,0,0,0.4);}
+.bubble{max-width:72%;padding:12px 14px;border-radius:12px;background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));color:var(--text);box-shadow: 0 6px 18px rgba(0,0,0,0.4);}
 .bubble.user{ background: linear-gradient(135deg, rgba(122,91,255,0.95), rgba(0,166,255,0.85)); color:#021; }
 .bubble.ai{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color:var(--text); }
 .input-row{display:flex;gap:10px;align-items:center;margin-top:8px}
@@ -34,45 +31,24 @@ html,body{height:100%;margin:0;background:linear-gradient(135deg,#070014,#001233
 .typing-indicator .dot:nth-child(2){ animation-delay: 0.12s; }
 .typing-indicator .dot:nth-child(3){ animation-delay: 0.24s; }
 @keyframes bounce { 0%{transform:translateY(0);opacity:0.35} 30%{transform:translateY(-6px);opacity:1} 60%{transform:translateY(0);opacity:0.35} 100%{transform:translateY(0);opacity:0.35} }
-@keyframes slideInRight { from{transform:translateX(40px);opacity:0} to{transform:translateX(0);opacity:1} }
-@keyframes slideInLeft { from{transform:translateX(-40px);opacity:0} to{transform:translateX(0);opacity:1} }
-.msg.user .bubble{animation: slideInRight .32s cubic-bezier(.22,.9,.24,1)}
-.msg.ai .bubble{animation: slideInLeft .32s cubic-bezier(.22,.9,.24,1)}
-.menu-toggle{position:fixed;right:20px;top:20px;z-index:60;padding:10px 12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#001;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,0.5)}
-.slide-menu{position:fixed;right:0;top:0;height:100vh;width:0;overflow:hidden;z-index:70;transition:width .36s cubic-bezier(.2,.9,.2,1);border-left:1px solid rgba(255,255,255,0.03)}
-.slide-menu.open{width:360px}
-.menu-inner{height:100%;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));backdrop-filter: blur(8px);padding:22px;display:flex;flex-direction:column;gap:14px}
-.menu-inner h3{margin:0;color:var(--accent)}
-.menu-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-.menu-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
-label.switch{display:inline-flex;align-items:center;gap:8px}
-.small-btn{padding:8px 10px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#001;cursor:pointer}
-.small{font-size:12px;opacity:0.8}
-@media (max-width:880px){ .slide-menu.open{width:100vw} .menu-inner{padding:14px} .app{margin:8px} }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="chat-wrap">
     <div class="panel">
-      <div id="chat" aria-live="polite"></div>
-
+      <div id="chat"></div>
       <div class="input-row">
-        <input id="inputText" type="text" placeholder="Напишите сообщение..." aria-label="Сообщение" />
+        <input id="inputText" type="text" placeholder="Напишите сообщение..." />
         <button id="sendBtn" class="btn">Отправить</button>
         <button id="clearBtn" class="btn clear">Очистить</button>
       </div>
-
       <div class="controls">
-        <input id="imagePrompt" type="search" placeholder="Промпт для генерации изображения..." aria-label="Промпт" />
+        <input id="imagePrompt" type="search" placeholder="Промпт для генерации изображения..." />
         <button id="genImageBtn" class="btn ghost">Сгенерировать изображение</button>
         <button id="uploadFileBtn" class="btn ghost">Загрузить файл</button>
         <input id="fileInput" type="file" class="hidden" />
         <button id="downloadBtn" class="btn ghost" style="margin-left:auto">Скачать диалог</button>
-      </div>
-
-      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-        <div class="small" style="margin-left:auto">Версия 1.0.8 — Neon</div>
       </div>
     </div>
   </div>
@@ -84,131 +60,97 @@ const inputText = document.getElementById('inputText');
 const sendBtn = document.getElementById('sendBtn');
 const clearBtn = document.getElementById('clearBtn');
 const downloadBtn = document.getElementById('downloadBtn');
+
 const imagePrompt = document.getElementById('imagePrompt');
 const genImageBtn = document.getElementById('genImageBtn');
 const uploadFileBtn = document.getElementById('uploadFileBtn');
 const fileInput = document.getElementById('fileInput');
 
-const API_URL = 'https://openai-proxy-3.onrender.com/v1/responses';
-
-let isSending = false;
+let isSending=false;
+const OPENAI_KEY = 'https://openai-proxy-ucgy.onrender.com'; 
 
 function appendMessage(text, role='ai', type='text', filename='') {
-  const wrap = document.createElement('div');
-  wrap.className = 'msg ' + role;
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble ' + (role==='user'?'user':'ai');
-  bubble.dataset.type = type;
-
-  if(type==='image'){
-    const img = document.createElement('img');
-    img.src = text; img.alt = filename || 'image'; img.style.maxWidth='420px';
-    img.style.borderRadius='8px'; img.loading='lazy'; img.style.cursor='pointer';
-    img.addEventListener('click',()=>window.open(img.src,'_blank'));
-    bubble.appendChild(img);
-  } else if(type==='file'){
-    const a = document.createElement('a');
-    a.href=text; a.download=filename || 'file'; a.textContent=filename?'Скачать '+filename:'Скачать файл';
-    bubble.appendChild(a);
-  } else {
-    bubble.textContent=text;
-  }
-
-  wrap.appendChild(bubble);
-  chatEl.appendChild(wrap);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  return wrap;
+  const wrap = document.createElement('div'); wrap.className = 'msg ' + role;
+  const bubble = document.createElement('div'); bubble.className = 'bubble ' + (role==='user'?'user':'ai');
+  if(type==='text'){ bubble.textContent = text; bubble.dataset.raw=text; }
+  else if(type==='image'){ const img=document.createElement('img'); img.src=text; img.alt=filename; img.style.maxWidth='420px'; img.style.borderRadius='8px'; bubble.appendChild(img); bubble.dataset.raw=text; bubble.dataset.filename=filename; }
+  else if(type==='file'){ const a=document.createElement('a'); a.href=text; a.download=filename; a.textContent='Скачать '+filename; bubble.appendChild(a); bubble.dataset.raw=text; bubble.dataset.filename=filename; }
+  wrap.appendChild(bubble); chatEl.appendChild(wrap); chatEl.scrollTop=chatEl.scrollHeight; return wrap;
 }
 
-function createTyping(){
-  const wrap=document.createElement('div');
-  wrap.className='msg ai'; wrap.id='typingBubble';
-  wrap.innerHTML='<div class="bubble ai"><div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
-  return wrap;
-}
-function showTyping(){ removeTyping(); chatEl.appendChild(createTyping()); chatEl.scrollTop=chatEl.scrollHeight; }
+function showTyping(){ const t=document.createElement('div'); t.className='msg ai'; t.id='typingBubble'; t.innerHTML='<div class="bubble ai"><div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>'; chatEl.appendChild(t); chatEl.scrollTop=chatEl.scrollHeight; }
 function removeTyping(){ const t=document.getElementById('typingBubble'); if(t) t.remove(); }
 
-function base64ToBlobUrl(b64,mime){ const byteChars=atob(b64); const byteNumbers=new Array(byteChars.length); for(let i=0;i<byteChars.length;i++)byteNumbers[i]=byteChars.charCodeAt(i); const byteArray=new Uint8Array(byteNumbers); const blob=new Blob([byteArray],{type:mime}); return URL.createObjectURL(blob); }
-
 async function sendMessage(textOverride){
-  if(isSending)return;
-  const text=textOverride||inputText.value.trim();
-  if(!text)return;
+  if(isSending) return;
+  const text=textOverride || inputText.value.trim();
+  if(!text) return;
   appendMessage(text,'user');
   inputText.value='';
   showTyping();
   isSending=true;
   try{
-    const body=JSON.stringify({model:'gpt-4o-mini',input:text});
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body});
+    const res=await fetch('https://api.openai.com/v1/responses',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENAI_KEY},
+      body:JSON.stringify({model:'gpt-4o-mini', input:text})
+    });
     const data=await res.json();
     removeTyping();
-    const contents=data.output?.[0]?.content||[];
-    if(contents.length){
-      for(const item of contents){
-        if(item.type==='text'||item.text) appendMessage(item.text||item.output_text,'ai');
-        else if(item.image_base64){
-          const blobUrl=base64ToBlobUrl(item.image_base64,'image/png');
-          appendMessage(blobUrl,'ai','image',item.filename||'gen.png');
-        }
-      }
-    } else {
-      const ans=data.output?.[0]?.content?.[0]?.text||'Ошибка: пустой ответ';
-      appendMessage(ans,'ai');
-    }
-  } catch(e){ removeTyping(); appendMessage('Ошибка сервера','ai'); console.error(e); }
-  finally{ isSending=false; }
+    const ans = data.output?.[0]?.content?.[0]?.text || 'Нет ответа';
+    appendMessage(ans,'ai');
+  }catch(e){ removeTyping(); appendMessage('Ошибка сервера','ai'); console.error(e);}
+  finally{isSending=false;}
 }
 
 sendBtn.onclick=()=>sendMessage();
-inputText.addEventListener('keydown',e=>{ if(e.key==='Enter')sendMessage(); });
-clearBtn.onclick=()=>{ chatEl.innerHTML=''; };
-
+inputText.addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
+clearBtn.onclick=()=>{chatEl.innerHTML='';};
 downloadBtn.onclick=()=>{
-  const rows=[...chatEl.querySelectorAll('.msg')].map(m=>{
-    const who=m.classList.contains('user')?'Вы':'ИИ';
-    const b=m.querySelector('.bubble'); return `${who}: ${b.textContent}`;
-  }).join('\n');
-  const blob=new Blob([rows],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='dialog.txt'; a.click(); URL.revokeObjectURL(a.href);
-};
+  const rows=[...chatEl.querySelectorAll('.msg')].map(m=>{const who=m.classList.contains('user')?'Вы':'ИИ'; const b=m.querySelector('.bubble'); return `${who}: ${b.dataset.raw||b.textContent}`;}).join('\n');
+  const blob=new Blob([rows],{type:'text/plain;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='dialog.txt'; a.click(); URL.revokeObjectURL(a.href);
+}
 
-genImageBtn.onclick=async()=>{
-  const prompt=imagePrompt.value.trim();
-  if(!prompt)return alert('Введите промпт');
-  appendMessage('Генерация изображения: '+prompt,'user');
-  showTyping();
+/* Генерация изображения */
+genImageBtn.onclick=async ()=>{
+  const prompt=imagePrompt.value.trim(); if(!prompt) return alert('Введите промпт');
+  appendMessage(`Генерация изображения: ${prompt}`,'user');
+  showTyping(); isSending=true;
   try{
-    const body=JSON.stringify({model:'gpt-image-1',prompt});
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body});
-    const data=await res.json();
-    removeTyping();
-    const url=data.output?.[0]?.content?.[0]?.url||data.data?.[0]?.url;
-    if(url) appendMessage(url,'ai','image');
-    else appendMessage('Ошибка генерации изображения','ai');
-  } catch(e){ removeTyping(); appendMessage('Ошибка генерации','ai'); console.error(e); }
-};
+    const res=await fetch('https://api.openai.com/v1/images/generations',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENAI_KEY},
+      body:JSON.stringify({model:'gpt-image-1',prompt,count:1,size:'1024x1024'})
+    });
+    const data=await res.json(); removeTyping();
+    const url=data.data?.[0]?.url; if(url) appendMessage(url,'ai','image','image.png'); else appendMessage('Ошибка генерации','ai');
+  }catch(e){removeTyping(); appendMessage('Ошибка генерации','ai'); console.error(e);}
+  finally{isSending=false;}
+}
 
+/* Загрузка файла */
 uploadFileBtn.onclick=()=>fileInput.click();
 fileInput.onchange=async function(){
-  const file=this.files[0]; if(!file)return;
-  appendMessage(`📁 Отправлен файл: ${file.name}`,'user');
-  showTyping();
+  const file=this.files[0]; if(!file) return; appendMessage(`📁 Отправлен файл: ${file.name}`,'user'); showTyping(); isSending=true;
   const reader=new FileReader();
   reader.onload=async ()=>{
-    const base64=reader.result.split(',')[1];
+    const base64=String(reader.result).split(',')[1];
     try{
-      const body=JSON.stringify({model:'gpt-4o-mini',input:[{type:'input_file',file_base64:base64,filename:file.name,mime:file.type,instruction:'Проанализируй файл и дай короткое резюме'}]});
-      const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body});
-      const data=await res.json();
-      removeTyping();
-      const contents=data.output?.[0]?.content||[];
-      if(contents.length) for(const item of contents) appendMessage(item.text||item.output_text,'ai');
-    } catch(e){ removeTyping(); appendMessage('Ошибка при отправке файла','ai'); console.error(e); }
-  };
+      const res=await fetch('https://api.openai.com/v1/responses',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENAI_KEY},
+        body:JSON.stringify({
+          model:'gpt-4o-mini',
+          input:[{type:'input_file',file_base64:base64,filename:file.name,mime:file.type,instruction:'Проанализируй файл и дай короткое резюме'}]
+        })
+      });
+      const data=await res.json(); removeTyping();
+      const ans=data.output?.[0]?.content?.[0]?.text || 'Нет ответа'; appendMessage(ans,'ai');
+    }catch(e){ removeTyping(); appendMessage('Ошибка при отправке файла','ai'); console.error(e);}
+    finally{isSending=false;}
+  }
   reader.readAsDataURL(file);
-};
+}
 </script>
 </body>
 </html>
