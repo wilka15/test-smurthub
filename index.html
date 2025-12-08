@@ -302,7 +302,7 @@ function initRecognitionIfNeeded() {
 micToggle.onclick = () => { const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) { alert('Голосовой ввод не поддерживается в вашем браузере'); return; } initRecognitionIfNeeded(); micActive = !micActive; micToggle.textContent = micActive ? 'Выключить 🎤' : 'Вкл 🎤'; if (micActive) rec.start(); else rec.stop(); };
 
 /* API endpoint (proxy) */
-const API_URL = 'https://openai-proxy-3.onrender.com/v1/responses';
+const API_URL = 'https://openai-proxy-ucgy.onrender.com';
 
 /* Helper: safe fetch with timeout */
 function fetchWithTimeout(url, options={}, timeout=60000) {
